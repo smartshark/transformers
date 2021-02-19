@@ -124,28 +124,28 @@ def load_tf_weights_in_bert(model, config, tf_checkpoint_path):
             logger.info("Skipping {}".format("/".join(name)))
             continue
         pointer = model
-        for m_name in name:
-            if re.fullmatch(r"[A-Za-z]+_\d+", m_name):
-                scope_names = re.split(r"_(\d+)", m_name)
-            else:
-                scope_names = [m_name]
-            if scope_names[0] == "kernel" or scope_names[0] == "gamma":
-                pointer = getattr(pointer, "weight")
-            elif scope_names[0] == "output_bias" or scope_names[0] == "beta":
-                pointer = getattr(pointer, "bias")
-            elif scope_names[0] == "output_weights":
-                pointer = getattr(pointer, "weight")
-            elif scope_names[0] == "squad":
-                pointer = getattr(pointer, "classifier")
-            else:
-                try:
+        try:
+            for m_name in name:
+                if re.fullmatch(r"[A-Za-z]+_\d+", m_name):
+                    scope_names = re.split(r"_(\d+)", m_name)
+                else:
+                    scope_names = [m_name]
+                if scope_names[0] == "kernel" or scope_names[0] == "gamma":
+                    pointer = getattr(pointer, "weight")
+                elif scope_names[0] == "output_bias" or scope_names[0] == "beta":
+                    pointer = getattr(pointer, "bias")
+                elif scope_names[0] == "output_weights":
+                    pointer = getattr(pointer, "weight")
+                elif scope_names[0] == "squad":
+                    pointer = getattr(pointer, "classifier")
+                else:
                     pointer = getattr(pointer, scope_names[0])
-                except AttributeError:
-                    logger.info("Skipping {}".format("/".join(name)))
-                    continue
-            if len(scope_names) >= 2:
-                num = int(scope_names[1])
-                pointer = pointer[num]
+                if len(scope_names) >= 2:
+                    num = int(scope_names[1])
+                    pointer = pointer[num]
+        except AttributeError:
+            logger.info("Skipping {}".format("/".join(name)))
+            continue
         if m_name[-11:] == "_embeddings":
             pointer = getattr(pointer, "weight")
         elif m_name == "kernel":
